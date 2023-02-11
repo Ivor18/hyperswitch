@@ -85,12 +85,13 @@ impl ConnectorCommon for Mollie {
 
         Ok(ErrorResponse {
             status_code: res.status_code,
-            code: "200".to_string(),
-            message: "None".to_string(),
-            reason: Some("None".to_string()),
+            code: response.status.to_string(),
+            message: response.title,
+            reason: Some(response.detail),
         })
     }
 }
+
 
 impl api::Payment for Mollie {}
 

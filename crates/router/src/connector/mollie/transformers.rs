@@ -615,7 +615,9 @@ pub struct MollieErrorData {
 }
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq)]
 pub struct MollieErrorResponse {
-    pub status: MollieErrorData,
+    pub status: i16,
+    pub title: String,
+    pub detail: String,
 }
 
 #[derive(Deserialize, Debug)]
