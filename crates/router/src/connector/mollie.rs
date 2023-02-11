@@ -160,7 +160,6 @@ impl ConnectorIntegration<api::Authorize, types::PaymentsAuthorizeData, types::P
         let mollie_req =
             utils::Encode::<mollie::MolliePaymentsRequest>::encode_to_string_of_json(&connector_req)
                 .change_context(errors::ConnectorError::RequestEncodingFailed)?;
-        println!("{}", mollie_req);
         Ok(Some(mollie_req))
     }
 
