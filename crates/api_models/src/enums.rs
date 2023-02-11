@@ -519,10 +519,10 @@ pub enum Connector {
     Cybersource,
     #[default]
     Dummy,
+	Mollie,
     Fiserv,
     Globalpay,
     Klarna,
-    Mollie,
     Payu,
     Rapyd,
     Shift4,
