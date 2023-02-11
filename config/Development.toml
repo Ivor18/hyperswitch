@@ -70,6 +70,9 @@ base_url = "https://api.sandbox.checkout.com/"
 [connectors.stripe]
 base_url = "https://api.stripe.com/"
 
+[connectors.mollie]
+base_url = "https://api.mollie.com/v2/"
+
 [connectors.braintree]
 base_url = "https://api.sandbox.braintreegateway.com/"
 
@@ -109,3 +112,6 @@ stream = "SCHEDULER_STREAM"
 [scheduler.consumer]
 disabled = false
 consumer_group = "SCHEDULER_GROUP"
+
+[secrets]
+admin_api_key = "test_admin"
