@@ -16,10 +16,15 @@ const WALLET_IDENTIFIER: &str = "PBL";
 #[derive(Debug, Serialize, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct MolliePaymentsRequest {
-    redirect_url: String,
-    webhook_url: String,
+    amount: MolliePaymentAmount,
     description: String,
-    amount: MolliePaymentAmount
+    redirect_url: String,
+    cancel_url: Option<String>,
+    webhook_url: Option<String>,
+    locale: Option<String>,
+    method: Option<String>,
+    restrict_payment_methods_to_country: Option<String>,
+    metadata: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Eq, PartialEq, Serialize)]
@@ -129,9 +134,22 @@ impl TryFrom<&types::PaymentsAuthorizeRouterData> for MolliePaymentsRequest {
 
         Ok(Self {
             amount: amount_info,
-            description: "dasdsa".to_string(),
-            redirect_url: "https://webshop.example.org/payments/webhook/".to_string(),
-            webhook_url: "https://webshop.example.org/payments/webhook/".to_string(),
+            description: item.description.clone().ok_or(
+                errors::ConnectorError::MissingRequiredField {
+                    field_name: "item.description",
+                },
+            )?,
+            redirect_url: item.return_url.clone().ok_or(
+                errors::ConnectorError::MissingRequiredField {
+                    field_name: "item.return_url",
+                },
+            )?,
+            cancel_url: None,
+            webhook_url: None,
+            locale: None,
+            method: None,
+            restrict_payment_methods_to_country: None,
+            metadata: None,
         })
     }
 }

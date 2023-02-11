@@ -42,9 +42,9 @@ where
 
         let auth_header = (
             headers::AUTHORIZATION.to_string(),
-            format!("Bearer {}", "test_P8JnSwNKcepUFQawWyGxetKSGWWJEw".to_string()),
+            format!("Bearer {}", auth.api_key),
         );
-        println!("{}", auth.api_key);
+
         headers.push(auth_header);
         Ok(headers)
     }
