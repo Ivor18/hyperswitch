@@ -71,7 +71,7 @@ base_url = "https://api.sandbox.checkout.com/"
 base_url = "https://api.stripe.com/"
 
 [connectors.mollie]
-base_url = "https://api.mollie.com/v2/"
+base_url = "https://api.mollie.com/v2/" 
 
 [connectors.braintree]
 base_url = "https://api.sandbox.braintreegateway.com/"
