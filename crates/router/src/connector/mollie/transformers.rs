@@ -173,21 +173,26 @@ impl TryFrom<&types::ConnectorAuthType> for MollieAuthType {
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum MolliePaymentStatus {
-    Succeeded,
-    Failed,
     #[default]
-    Processing,
-    #[serde(rename = "open")]
-    Open
+    Open,
+    Canceled,
+    Pending,
+    Authorized,
+    Expired,
+    Failed,
+    Paid
 }
 
 impl From<MolliePaymentStatus> for enums::AttemptStatus {
     fn from(item: MolliePaymentStatus) -> Self {
         match item {
-            MolliePaymentStatus::Succeeded => Self::Charged,
+            MolliePaymentStatus::Open => Self::Started,
+            MolliePaymentStatus::Canceled => Self::Voided,
+            MolliePaymentStatus::Pending => Self::Pending,
+            MolliePaymentStatus::Authorized => Self::Authorized,
+            MolliePaymentStatus::Expired => Self::AuthorizationFailed,
             MolliePaymentStatus::Failed => Self::Failure,
-            MolliePaymentStatus::Processing => Self::Authorizing,
-            MolliePaymentStatus::Open => Self::Pending
+            MolliePaymentStatus::Paid => Self::Charged,
         }
     }
 }
@@ -383,6 +388,7 @@ pub struct MolliePaymentStatusData {
     severity: Option<String>,
     status_desc: Option<String>,
 }
+
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct MollieProductData {
