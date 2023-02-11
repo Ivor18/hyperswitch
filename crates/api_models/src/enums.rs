@@ -522,6 +522,7 @@ pub enum Connector {
     Fiserv,
     Globalpay,
     Klarna,
+    Mollie,
     Payu,
     Rapyd,
     Shift4,
@@ -560,13 +561,13 @@ pub enum RoutableConnectors {
     Fiserv,
     Globalpay,
     Klarna,
+    Mollie,
     Payu,
     Rapyd,
     Shift4,
     Stripe,
     Worldline,
     Worldpay,
-    Mollie
 }
 
 /// Wallets which support obtaining session object
