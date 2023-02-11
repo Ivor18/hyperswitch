@@ -70,7 +70,7 @@ pub type RefreshTokenType =
 
 pub type VerifyRouterData = RouterData<api::Verify, VerifyRequestData, PaymentsResponseData>;
 
-#[derive(Debug, Clone, strum::Display)]
+#[derive(Debug, Clone)]
 pub struct RouterData<Flow, Request, Response> {
     pub flow: PhantomData<Flow>,
     pub merchant_id: String,

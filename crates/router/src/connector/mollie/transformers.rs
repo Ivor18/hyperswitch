@@ -16,19 +16,23 @@ const WALLET_IDENTIFIER: &str = "PBL";
 #[derive(Debug, Serialize, Eq, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct MolliePaymentsRequest {
-    customer_ip: std::net::IpAddr,
-    merchant_pos_id: String,
-    total_amount: i64,
-    currency_code: enums::Currency,
+    redirect_url: String,
+    webhook_url: String,
     description: String,
-    pay_methods: MolliePaymentMethod,
-    continue_url: Option<String>,
+    amount: MolliePaymentAmount
 }
 
 #[derive(Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MolliePaymentMethod {
     pay_method: MolliePaymentMethodData,
+}
+
+#[derive(Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MolliePaymentAmount {
+    currency: String,
+    value: String
 }
 
 #[derive(Debug, Eq, PartialEq, Serialize)]
@@ -117,43 +121,31 @@ impl TryFrom<&types::PaymentsAuthorizeRouterData> for MolliePaymentsRequest {
                 "Unknown payment method".to_string(),
             )),
         }?;
-        let browser_info = item.request.browser_info.clone().ok_or(
-            errors::ConnectorError::MissingRequiredField {
-                field_name: "browser_info",
-            },
-        )?;
+
+        let amount_info = MolliePaymentAmount {
+            value: format!("{}.00", item.request.amount.to_string()),
+            currency: item.request.currency.to_string(),
+        };
+
         Ok(Self {
-            customer_ip: browser_info.ip_address.ok_or(
-                errors::ConnectorError::MissingRequiredField {
-                    field_name: "browser_info.ip_address",
-                },
-            )?,
-            merchant_pos_id: auth_type.merchant_pos_id,
-            total_amount: item.request.amount,
-            currency_code: item.request.currency,
-            description: item.description.clone().ok_or(
-                errors::ConnectorError::MissingRequiredField {
-                    field_name: "item.description",
-                },
-            )?,
-            pay_methods: payment_method,
-            continue_url: None,
+            amount: amount_info,
+            description: "dasdsa".to_string(),
+            redirect_url: "https://webshop.example.org/payments/webhook/".to_string(),
+            webhook_url: "https://webshop.example.org/payments/webhook/".to_string(),
         })
     }
 }
 
 pub struct MollieAuthType {
     pub(super) api_key: String,
-    pub(super) merchant_pos_id: String,
 }
 
 impl TryFrom<&types::ConnectorAuthType> for MollieAuthType {
     type Error = error_stack::Report<errors::ConnectorError>;
     fn try_from(auth_type: &types::ConnectorAuthType) -> Result<Self, Self::Error> {
         match auth_type {
-            types::ConnectorAuthType::BodyKey { api_key, key1 } => Ok(Self {
+            types::ConnectorAuthType::HeaderKey { api_key } => Ok(Self {
                 api_key: api_key.to_string(),
-                merchant_pos_id: key1.to_string(),
             }),
             _ => Err(errors::ConnectorError::FailedToObtainAuthType)?,
         }
@@ -161,25 +153,23 @@ impl TryFrom<&types::ConnectorAuthType> for MollieAuthType {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(rename_all = "snake_case")]
 pub enum MolliePaymentStatus {
-    Success,
-    WarningContinueRedirect,
-    #[serde(rename = "WARNING_CONTINUE_3DS")]
-    WarningContinue3ds,
-    WarningContinueCvv,
+    Succeeded,
+    Failed,
     #[default]
-    Pending,
+    Processing,
+    #[serde(rename = "open")]
+    Open
 }
 
 impl From<MolliePaymentStatus> for enums::AttemptStatus {
     fn from(item: MolliePaymentStatus) -> Self {
         match item {
-            MolliePaymentStatus::Success => Self::Pending,
-            MolliePaymentStatus::WarningContinue3ds => Self::Pending,
-            MolliePaymentStatus::WarningContinueCvv => Self::Pending,
-            MolliePaymentStatus::WarningContinueRedirect => Self::Pending,
-            MolliePaymentStatus::Pending => Self::Pending,
+            MolliePaymentStatus::Succeeded => Self::Charged,
+            MolliePaymentStatus::Failed => Self::Failure,
+            MolliePaymentStatus::Processing => Self::Authorizing,
+            MolliePaymentStatus::Open => Self::Pending
         }
     }
 }
@@ -187,12 +177,8 @@ impl From<MolliePaymentStatus> for enums::AttemptStatus {
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct MolliePaymentsResponse {
-    pub status: MolliePaymentStatusData,
-    pub redirect_uri: String,
-    pub iframe_allowed: Option<bool>,
-    pub three_ds_protocol_version: Option<String>,
-    pub order_id: String,
-    pub ext_order_id: Option<String>,
+    pub id: String,
+    pub status: MolliePaymentStatus
 }
 
 impl<F, T>
@@ -204,10 +190,10 @@ impl<F, T>
         item: types::ResponseRouterData<F, MolliePaymentsResponse, T, types::PaymentsResponseData>,
     ) -> Result<Self, Self::Error> {
         Ok(Self {
-            status: enums::AttemptStatus::from(item.response.status.status_code),
+            status: enums::AttemptStatus::from(item.response.status),
             response: Ok(types::PaymentsResponseData::TransactionResponse {
-                resource_id: types::ResponseId::ConnectorTransactionId(item.response.order_id),
-                redirect: false,
+                resource_id: types::ResponseId::ConnectorTransactionId(item.response.id),
+                redirect: true,
                 redirection_data: None,
                 mandate_reference: None,
                 connector_metadata: None,

@@ -8,7 +8,6 @@ mod connector_auth;
 mod cybersource;
 mod fiserv;
 mod globalpay;
-mod mollie;
 mod payu;
 mod rapyd;
 mod shift4;

@@ -38,16 +38,13 @@ where
             self.get_content_type().to_string(),
         )];
 
-        let access_token = req
-            .access_token
-            .clone()
-            .ok_or(errors::ConnectorError::FailedToObtainAuthType)?;
+        let auth: mollie::MollieAuthType = mollie::MollieAuthType::try_from(&req.connector_auth_type)?;
 
         let auth_header = (
             headers::AUTHORIZATION.to_string(),
-            format!("Bearer {}", access_token.token),
+            format!("Bearer {}", "test_P8JnSwNKcepUFQawWyGxetKSGWWJEw".to_string()),
         );
-
+        println!("{}", auth.api_key);
         headers.push(auth_header);
         Ok(headers)
     }
@@ -88,9 +85,9 @@ impl ConnectorCommon for Mollie {
 
         Ok(ErrorResponse {
             status_code: res.status_code,
-            code: response.status.status_code,
-            message: response.status.status_desc,
-            reason: response.status.code_literal,
+            code: "200".to_string(),
+            message: "None".to_string(),
+            reason: Some("None".to_string()),
         })
     }
 }
@@ -127,10 +124,9 @@ impl ConnectorIntegration<api::Void, types::PaymentsCancelData, types::PaymentsR
     ) -> CustomResult<String, errors::ConnectorError> {
         let connector_payment_id = &req.request.connector_transaction_id;
         Ok(format!(
-            "{}{}{}",
+            "{}{}",
             self.base_url(connectors),
-            "api/v2_1/orders/",
-            connector_payment_id
+            "v2/payments"
         ))
     }
     fn build_request(
@@ -299,7 +295,7 @@ impl ConnectorIntegration<api::PSync, types::PaymentsSyncData, types::PaymentsRe
         Ok(format!(
             "{}{}{}",
             self.base_url(connectors),
-            "api/v2_1/orders/",
+            "v2/payments/",
             connector_payment_id
         ))
     }
@@ -463,7 +459,7 @@ impl ConnectorIntegration<api::Authorize, types::PaymentsAuthorizeData, types::P
         Ok(format!(
             "{}{}",
             self.base_url(connectors),
-            "api/v2_1/orders"
+            "v2/payments"
         ))
     }
 
@@ -475,6 +471,7 @@ impl ConnectorIntegration<api::Authorize, types::PaymentsAuthorizeData, types::P
         let mollie_req =
             utils::Encode::<mollie::MolliePaymentsRequest>::encode_to_string_of_json(&connector_req)
                 .change_context(errors::ConnectorError::RequestEncodingFailed)?;
+        println!("{}", mollie_req);
         Ok(Some(mollie_req))
     }
 
